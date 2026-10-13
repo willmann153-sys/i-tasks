@@ -165,10 +165,44 @@
 <h2 id="daten-verbindungen-und-kontakt">Daten, Verbindungen und Kontakt</h2>
 <h3 id="diese-downloadseite">Diese Downloadseite</h3>
 <p>Diese Seite enthält keine eigenen Analyse-, Werbe- oder Trackingdienste, keine extern geladenen Schriftarten und kein Kontaktformular. Die Webseite wird über GitHub Pages bereitgestellt, die Installationsdateien über GitHub Releases. Bei deren Nutzung verarbeitet GitHub technische Verbindungs- und Nutzungsdaten gemäß seiner <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">Datenschutzerklärung</a>.</p>
+<p>Der Downloadzähler fragt die öffentlich verfügbare Anzahl der APK-Downloadabrufe bei GitHub ab. Er verwendet keine eigenen Besucherkennungen.</p>
 <h3 id="die-app">Die App</h3>
 <p>Persönliche Organisationsdaten werden auf dem Gerät gespeichert. Je nach eingerichteter Funktion verbindet sich die App mit Nachrichtenquellen, Kalenderanbietern, WebDAV-Speicher oder einem gewählten Sicherungsziel.</p>
 <p>Die Texterkennung im i-assistenten verwendet Google ML Kit: Bild und erkannter Text werden dabei auf dem Gerät verarbeitet. Das SDK kann technische Leistungs- und Nutzungsdaten an Google übertragen; weitere Angaben stehen in den <a href="https://developers.google.com/ml-kit/terms">ML-Kit-Bedingungen</a>.</p>
 <p>Bei deiner Übergabe an ChatGPT gelten die Bedingungen und Datenschutzhinweise dieses Dienstes.</p>
 <h3 id="kontakt-und-anbieterangaben">Kontakt und Anbieterangaben</h3>
 <p><strong>Josef Willmann</strong></p>
-<p>Kontakt: <a href="mailto:i-tasks@im-kinzigtal.de">i-tasks@im-kinzigtal.de</a></p></main></div><footer class="wrap footer"><span>© 2026 Josef Willmann · i-tasks</span><div><a href="#daten-verbindungen-und-kontakt">Daten und Dienste</a><a href="#kontakt-und-anbieterangaben">Kontakt</a></div></footer></body></html>
+<p>Kontakt: <a href="mailto:i-tasks@im-kinzigtal.de">i-tasks@im-kinzigtal.de</a></p></main></div><footer class="wrap footer"><span>© 2026 Josef Willmann · i-tasks</span><div><a href="#daten-verbindungen-und-kontakt">Daten und Dienste</a><a href="#kontakt-und-anbieterangaben">Kontakt</a><span id="apk-download-count" class="download-count" role="status" aria-live="polite" title="APK 0.901: Downloadabrufe bei GitHub, keine Installationszahlen">APK-Downloads: …</span></div></footer><style>.download-count{display:inline-block;margin-left:18px;color:#526b5e;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}@media(max-width:620px){.download-count{display:block;margin:12px 0 0}}</style>
+<script>
+(() => {
+  const display = document.getElementById('apk-download-count');
+  if (!display) return;
+  const cacheKey = 'itasks-apk-downloads-v0.901';
+  const ttl = 15 * 60 * 1000;
+  const valid = count => Number.isSafeInteger(count) && count >= 0;
+  const show = count => { display.textContent = 'APK-Downloads: ' + new Intl.NumberFormat('de-DE').format(count); };
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(cacheKey));
+    if (cached && valid(cached.count) && Number.isFinite(cached.at) && Date.now() - cached.at >= 0 && Date.now() - cached.at < ttl) {
+      show(cached.count);
+      return;
+    }
+  } catch (_) {}
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  fetch('https://api.github.com/repos/willmann153-sys/i-tasks/releases/tags/v0.901', {
+    credentials: 'omit', referrerPolicy: 'no-referrer', signal: controller.signal
+  }).then(response => {
+    if (!response.ok) throw new Error('Downloadzahl nicht verfügbar');
+    return response.json();
+  }).then(release => {
+    const apk = Array.isArray(release.assets) && release.assets.find(asset => asset.name === 'i-tasks-0.901.apk');
+    if (!apk || !valid(apk.download_count)) throw new Error('Downloadzahl nicht verfügbar');
+    show(apk.download_count);
+    try { sessionStorage.setItem(cacheKey, JSON.stringify({ count: apk.download_count, at: Date.now() })); } catch (_) {}
+  }).catch(() => {
+    display.textContent = 'APK-Downloads: derzeit nicht abrufbar';
+  }).finally(() => clearTimeout(timer));
+})();
+</script>
+</body></html>
